@@ -1,0 +1,11 @@
+[flake8]
+ignore = 
+    E501, # line length  
+    W503  # line break before binary operator, will soon become 'best practice' https://www.flake8rules.com/rules/W503.html
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    source,
+    input_checker/__init__.py

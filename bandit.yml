@@ -1,0 +1,6 @@
+### profile may optionally select or skip tests
+
+# skip B101 test (assert used) in test scripts
+assert_used:
+  skips: ['*/test_*.py']
+

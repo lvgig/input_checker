@@ -17,7 +17,10 @@ help:
 # Autodoc creation with apidoc
 apidoc:
 	sphinx-apidoc -fMe ../input_checker -o source/api
-
+	@echo "Auto-generation of API documentation finished;" \
+			"removing unwanted output."
+	rm source/api/modules.rst
+	
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile

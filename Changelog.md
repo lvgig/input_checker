@@ -1,6 +1,9 @@
 # Change log
 
 ----
+# 0.3.10
+- Updated tests to depend on test-aide rather than historic Tubular helpers package
+
 # 0.3.9
 - Stripped of internal files and updated md documents
 

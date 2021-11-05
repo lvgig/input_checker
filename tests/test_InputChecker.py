@@ -3,8 +3,7 @@ import numpy as np
 import pytest
 import re
 import tubular
-import tubular.testing.helpers as h
-import tubular.testing.test_data as data_generators_p
+import test_aide as ta
 
 import input_checker
 from input_checker._version import __version__
@@ -20,7 +19,7 @@ class TestInit(object):
 
         expected_call_args = {0: {"args": (), "kwargs": {"columns": ["a", "b"]}}}
 
-        with h.assert_function_call(
+        with ta.functions.assert_function_call(
             mocker, tubular.base.BaseTransformer, "__init__", expected_call_args
         ):
             InputChecker(columns=["a", "b"])
@@ -30,12 +29,12 @@ class TestInit(object):
 
         x = InputChecker()
 
-        h.assert_inheritance(x, tubular.base.BaseTransformer)
+        ta.classes.assert_inheritance(x, tubular.base.BaseTransformer)
 
     def test_arguments(self):
         """Test that InputChecker init has expected arguments."""
 
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker.__init__,
             expected_arguments=[
                 "self",
@@ -53,13 +52,11 @@ class TestInit(object):
 
         x = InputChecker(columns=["a"])
 
-        h.assert_equal_dispatch(
-            expected=__version__,
-            actual=x.version_,
-            msg="__version__ attribute",
+        ta.equality.assert_equal_dispatch(
+            expected=__version__, actual=x.version_, msg="__version__ attribute",
         )
 
-    def test_columns_attributes_generated(self):
+    def test_columns_attributes_generated(self, df):
         """Test all columns attributes are saved with InputChecker init"""
 
         x = InputChecker(
@@ -69,8 +66,6 @@ class TestInit(object):
             datetime_columns=["d"],
             skip_infer_columns=["c"],
         )
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -291,17 +286,15 @@ class TestInit(object):
 class TestConsolidateInputs(object):
     def test_arguments(self):
         """Test that _consolidate_inputs has expected arguments."""
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._consolidate_inputs,
             expected_arguments=["self", "X"],
             expected_default_values=None,
         )
 
-    def test_infer_datetime_columns(self):
+    def test_infer_datetime_columns(self, df):
         """Test that _consolidate_inputs infers the correct datetime columns"""
         x = InputChecker(datetime_columns="infer")
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -333,12 +326,10 @@ class TestConsolidateInputs(object):
             "e",
         ], "infer datetime not finding correct columns"
 
-    def test_infer_datetime_dict(self):
+    def test_infer_datetime_dict(self, df):
         """Test that _consolidate_inputs infers the correct datetime dict"""
 
         x = InputChecker(datetime_columns="infer")
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -362,11 +353,9 @@ class TestConsolidateInputs(object):
             x.datetime_dict["d"]["minimum"] is True
         ), "infer numerical not specifying maximum value check as true"
 
-    def test_infer_categorical_columns(self):
+    def test_infer_categorical_columns(self, df):
         """Test that _consolidate_inputs infers the correct categorical columns"""
         x = InputChecker(categorical_columns="infer")
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = [True, True, False, True, True, False, np.nan]
 
@@ -380,12 +369,10 @@ class TestConsolidateInputs(object):
             "d",
         ], "infer categorical not finding correct columns"
 
-    def test_infer_numerical_columns(self):
+    def test_infer_numerical_columns(self, df):
         """Test that _consolidate_inputs infers the correct numerical columns"""
 
         x = InputChecker(numerical_columns="infer")
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -393,12 +380,10 @@ class TestConsolidateInputs(object):
             "a"
         ], "infer numerical not finding correct columns"
 
-    def test_infer_numerical_skips_infer_columns(self):
+    def test_infer_numerical_skips_infer_columns(self, df):
         """Test that _consolidate_inputs skips right columns when inferring numerical"""
 
         x = InputChecker(numerical_columns="infer", skip_infer_columns=["a"])
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = df["a"]
 
@@ -408,12 +393,10 @@ class TestConsolidateInputs(object):
             "d"
         ], "infer numerical not finding correct columns when skipping infer columns"
 
-    def test_infer_categorical_skips_infer_columns(self):
+    def test_infer_categorical_skips_infer_columns(self, df):
         """Test that _consolidate_inputs skips right columns when inferring categorical"""
 
         x = InputChecker(categorical_columns="infer", skip_infer_columns=["b"])
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -421,12 +404,10 @@ class TestConsolidateInputs(object):
             "c"
         ], "infer categorical not finding correct columns when skipping infer columns"
 
-    def test_infer_datetime_skips_infer_columns(self):
+    def test_infer_datetime_skips_infer_columns(self, df):
         """Test that _consolidate_inputs skips right columns when inferring datetime"""
 
         x = InputChecker(datetime_columns="infer", skip_infer_columns=["d"])
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -448,12 +429,10 @@ class TestConsolidateInputs(object):
             "a"
         ], "infer datetime not finding correct columns when skipping infer columns"
 
-    def test_infer_numerical_dict(self):
+    def test_infer_numerical_dict(self, df):
         """Test that _consolidate_inputs infers the correct numerical dict"""
 
         x = InputChecker(numerical_columns="infer")
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -465,12 +444,10 @@ class TestConsolidateInputs(object):
             x.numerical_dict["a"]["minimum"] is True
         ), "infer numerical not specifying minimum value check as true"
 
-    def test_datetime_type(self):
+    def test_datetime_type(self, df):
         """Test that datetime columns is a list after calling _consolidate_inputs"""
 
         x = InputChecker(datetime_columns="infer")
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -490,12 +467,10 @@ class TestConsolidateInputs(object):
             type(x.datetime_columns) is list
         ), f"incorrect datetime_columns type returned from _consolidate_inputs - expected: list but got: {type(x.datetime_columns)} "
 
-    def test_categorical_type(self):
+    def test_categorical_type(self, df):
         """Test that categorical columns is a list after calling _consolidate_inputs"""
 
         x = InputChecker(categorical_columns="infer")
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -503,12 +478,10 @@ class TestConsolidateInputs(object):
             type(x.categorical_columns) is list
         ), f"incorrect categorical_columns type returned from _consolidate_inputs - expected: list but got: {type(x.categorical_columns)} "
 
-    def test_numerical_type(self):
+    def test_numerical_type(self, df):
         """Test that numerical columns and dict are a list and dict after calling _consolidate_inputs"""
 
         x = InputChecker(numerical_columns="infer")
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -520,7 +493,7 @@ class TestConsolidateInputs(object):
             type(x.numerical_dict) is dict
         ), f"incorrect numerical_dict type returned from _consolidate_inputs - expected: dict but got: {type(x.numerical_dict)} "
 
-    def test_check_is_subset_called(self, mocker):
+    def test_check_is_subset_called(self, df, mocker):
         """Test all check _is_subset is called by the _consolidate_inputs method."""
 
         x = InputChecker(
@@ -530,8 +503,6 @@ class TestConsolidateInputs(object):
             datetime_columns=["d"],
             skip_infer_columns=["b"],
         )
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -601,7 +572,7 @@ class TestFitTypeChecker(object):
     def test_arguments(self):
         """Test that InputChecker _fit_type_checker has expected arguments."""
 
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._fit_type_checker, expected_arguments=["self", "X"]
         )
 
@@ -614,10 +585,8 @@ class TestFitTypeChecker(object):
             hasattr(x, "column_classes") is False
         ), "column_classes attribute present before fit"
 
-    def test_column_classes_after_fit(self):
+    def test_column_classes_after_fit(self, df):
         """Test column_classes is present after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -627,10 +596,8 @@ class TestFitTypeChecker(object):
             x, "column_classes"
         ), "column_classes attribute not present after fit"
 
-    def test_correct_columns_classes(self):
+    def test_correct_columns_classes(self, df):
         """Test fit type checker saves types for correct columns after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(columns=["a"])
 
@@ -640,10 +607,8 @@ class TestFitTypeChecker(object):
             "a"
         ], f"incorrect values returned from _fit_value_checker - expected: ['a'] but got: {list(x.column_classes.keys())}"
 
-    def test_correct_classes_identified(self):
+    def test_correct_classes_identified(self, df):
         """Test fit type checker identifies correct classes is present after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -684,7 +649,7 @@ class TestFitNullChecker(object):
     def test_arguments(self):
         """Test that InputChecker _fit_null_checker has expected arguments."""
 
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._fit_null_checker, expected_arguments=["self", "X"]
         )
 
@@ -695,10 +660,8 @@ class TestFitNullChecker(object):
 
         assert hasattr(x, "null_map") is False, "null_map attribute present before fit"
 
-    def test_expected_values_after_fit(self):
+    def test_expected_values_after_fit(self, df):
         """Test null_map is present after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -706,10 +669,8 @@ class TestFitNullChecker(object):
 
         assert hasattr(x, "null_map"), "null_map attribute not present after fit"
 
-    def test_correct_columns_nulls(self):
+    def test_correct_columns_nulls(self, df):
         """Test fit nulls checker saves map for correct columns after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(columns=["a"])
 
@@ -719,10 +680,8 @@ class TestFitNullChecker(object):
             "a"
         ], f"incorrect values returned from _fit_null_checker - expected: ['a'] but got: {list(x.null_map.keys())}"
 
-    def test_correct_classes_identified(self):
+    def test_correct_classes_identified(self, df):
         """Test fit null checker identifies correct columns with nulls after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -749,7 +708,7 @@ class TestFitValueChecker(object):
     def test_arguments(self):
         """Test that InputChecker _fit_value_checker has expected arguments."""
 
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._fit_value_checker, expected_arguments=["self", "X"]
         )
 
@@ -762,10 +721,8 @@ class TestFitValueChecker(object):
             hasattr(x, "expected_values") is False
         ), "expected_values attribute present before fit"
 
-    def test_expected_values_after_fit(self):
+    def test_expected_values_after_fit(self, df):
         """Test expected_values is present after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(categorical_columns=["b", "c"])
 
@@ -775,10 +732,8 @@ class TestFitValueChecker(object):
             x, "expected_values"
         ), "expected_values attribute not present after fit"
 
-    def test_correct_columns_map(self):
+    def test_correct_columns_map(self, df):
         """Test fit value checker saves levels for correct columns after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(categorical_columns=["b", "c"])
 
@@ -789,10 +744,8 @@ class TestFitValueChecker(object):
             "c",
         ], f"incorrect values returned from _fit_value_checker - expected: ['b', 'c'] but got: {list(x.expected_values.keys())}"
 
-    def test_correct_values_identified(self):
+    def test_correct_values_identified(self, df):
         """Test fit value checker identifies corrcet levels after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = [True, True, False, True, True, False, np.nan]
 
@@ -834,7 +787,7 @@ class TestFitNumericalChecker(object):
     def test_arguments(self):
         """Test that InputChecker _fit_numerical_checker has expected arguments."""
 
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._fit_numerical_checker, expected_arguments=["self", "X"]
         )
 
@@ -847,10 +800,8 @@ class TestFitNumericalChecker(object):
             hasattr(x, "numerical_values") is False
         ), "numerical_values attribute present before fit"
 
-    def test_expected_values_after_fit(self):
+    def test_expected_values_after_fit(self, df):
         """Test numerical_values is present after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(numerical_columns=["a"])
 
@@ -860,10 +811,8 @@ class TestFitNumericalChecker(object):
             x, "numerical_values"
         ), "numerical_values attribute not present after fit"
 
-    def test_correct_columns_num_values(self):
+    def test_correct_columns_num_values(self, df):
         """Test fit numerical checker saves values for correct columns after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(numerical_columns=["a"])
 
@@ -873,10 +822,8 @@ class TestFitNumericalChecker(object):
             "a"
         ], f"incorrect values returned from numerical_values - expected: ['a'] but got: {list(x.numerical_values.keys())}"
 
-    def test_correct_numerical_values_identified(self):
+    def test_correct_numerical_values_identified(self, df):
         """Test fit numerical checker identifies correct range values after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(numerical_columns=["a"])
 
@@ -890,10 +837,8 @@ class TestFitNumericalChecker(object):
             x.numerical_values["a"]["minimum"] == 1
         ), f"incorrect values returned from _fit_numerical_checker - expected: 0 but got: {x.numerical_values['a']['minimum']}"
 
-    def test_correct_numerical_values_identified_dict(self):
+    def test_correct_numerical_values_identified_dict(self, df):
         """Test fit numerical checker identifies correct range values after fit called when inputting a dictionary"""
-
-        df = data_generators_p.create_df_2()
 
         numerical_dict = {}
         numerical_dict["a"] = {}
@@ -919,7 +864,7 @@ class TestFitDatetimeChecker(object):
     def test_arguments(self):
         """Test that InputChecker _fit_value_checker has expected arguments."""
 
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._fit_datetime_checker, expected_arguments=["self", "X"]
         )
 
@@ -932,10 +877,8 @@ class TestFitDatetimeChecker(object):
             hasattr(x, "datetime_values") is False
         ), "datetime_values attribute present before fit"
 
-    def test_datetime_values_after_fit(self):
+    def test_datetime_values_after_fit(self, df):
         """Test datetime_values is present after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -968,10 +911,8 @@ class TestFitDatetimeChecker(object):
             x, "datetime_values"
         ), "datetime_values attribute not present after fit"
 
-    def test_correct_columns_map(self):
+    def test_correct_columns_map(self, df):
         """Test fit datetime checker saves minimum dates for correct columns after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -1005,10 +946,8 @@ class TestFitDatetimeChecker(object):
             "e",
         ], f"incorrect values returned from _fit_datetime_checker - expected: ['d', 'e'] but got: {list(x.datetime_values.keys())} "
 
-    def test_correct_datetime_values_identified(self):
+    def test_correct_datetime_values_identified(self, df):
         """Test fit datetime checker identifies correct minimum bound after fit called"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -1039,10 +978,8 @@ class TestFitDatetimeChecker(object):
             actual_max_d is None
         ), f"incorrect values returned from _fit_datetime_checker - expected: None, but got: {actual_max_d}"
 
-    def test_correct_datetime_values_identified_dict(self):
+    def test_correct_datetime_values_identified_dict(self, df):
         """Test fit datetime checker identifies correct range values after fit called when inputting a dictionary"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -1083,32 +1020,26 @@ class TestFit(object):
     def test_arguments(self):
         """Test that InputChecker fit has expected arguments."""
 
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker.fit,
             expected_arguments=["self", "X", "y"],
             expected_default_values=(None,),
         )
 
-    def test_super_fit_called(self, mocker):
+    def test_super_fit_called(self, df, mocker):
         """Test that BaseTransformer fit called."""
 
-        expected_call_args = {
-            0: {"args": (data_generators_p.create_df_2(), None), "kwargs": {}}
-        }
-
-        df = data_generators_p.create_df_2()
+        expected_call_args = {0: {"args": (df, None), "kwargs": {}}}
 
         x = InputChecker(columns=["a"])
 
-        with h.assert_function_call(
+        with ta.functions.assert_function_call(
             mocker, tubular.base.BaseTransformer, "fit", expected_call_args
         ):
             x.fit(df)
 
-    def test_all_columns_selected(self):
+    def test_all_columns_selected(self, df):
         """Test fit selects all columns when columns parameter set to None"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(columns=None)
 
@@ -1124,10 +1055,8 @@ class TestFit(object):
             "c",
         ], f"incorrect columns identified when columns parameter set to None - expected: ['a', 'b', 'c'] but got: {x.columns}"
 
-    def test_fit_returns_self(self):
+    def test_fit_returns_self(self, df):
         """Test fit returns self?"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -1135,14 +1064,12 @@ class TestFit(object):
 
         assert x_fitted is x, "Returned value from InputChecker.fit not as expected."
 
-    def test_no_optional_calls_fit(self):
+    def test_no_optional_calls_fit(self, df):
         """Test numerical_values and expected_values is not present after fit if parameters set to None"""
 
         x = InputChecker(
             numerical_columns=None, categorical_columns=None, datetime_columns=None
         )
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -1158,14 +1085,12 @@ class TestFit(object):
             hasattr(x, "datetime_values") is False
         ), "datetime_values attribute present with datetime_columns set to None"
 
-    def test_compulsory_checks_generated_with_no_optional_calls_fit(self):
+    def test_compulsory_checks_generated_with_no_optional_calls_fit(self, df):
         """Test null_map and column_classes are present after fit when optional parameters set to None"""
 
         x = InputChecker(
             numerical_columns=None, categorical_columns=None, datetime_columns=None
         )
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -1177,7 +1102,7 @@ class TestFit(object):
             hasattr(x, "column_classes") is True
         ), "column_classes attribute not present when optional checks set to None"
 
-    def test_all_checks_generated(self):
+    def test_all_checks_generated(self, df):
         """Test all checks are generated when all optional parameters set"""
 
         x = InputChecker(
@@ -1186,8 +1111,6 @@ class TestFit(object):
             categorical_columns=["b", "c"],
             datetime_columns=["d"],
         )
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -1223,7 +1146,7 @@ class TestFit(object):
             hasattr(x, "column_classes") is True
         ), "column_classes attribute not present after fit"
 
-    def test_check_df_is_empty_called(self, mocker):
+    def test_check_df_is_empty_called(self, df, mocker):
         """Test check is df empty is called by the fit method."""
 
         x = InputChecker(
@@ -1231,8 +1154,6 @@ class TestFit(object):
             numerical_columns=["a"],
             categorical_columns=["b", "c"],
         )
-
-        df = data_generators_p.create_df_2()
 
         spy = mocker.spy(input_checker.checker.InputChecker, "_df_is_empty")
 
@@ -1258,32 +1179,28 @@ class TestTransformTypeChecker(object):
     def test_arguments(self):
         """Test that InputChecker _transform_type_checker has expected arguments."""
 
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._transform_type_checker,
             expected_arguments=["self", "X", "batch_mode"],
             expected_default_values=(False,),
         )
 
-    def test_check_fitted_called(self, mocker):
+    def test_check_fitted_called(self, df, mocker):
         """Test that transform calls BaseTransformer.check_is_fitted."""
 
         expected_call_args = {0: {"args": (["column_classes"],), "kwargs": {}}}
 
         x = InputChecker()
 
-        df = data_generators_p.create_df_2()
-
         x.fit(df)
 
-        with h.assert_function_call(
+        with ta.functions.assert_function_call(
             mocker, tubular.base.BaseTransformer, "check_is_fitted", expected_call_args
         ):
             x._transform_type_checker(df)
 
-    def test_transform_returns_failed_checks_dict(self):
+    def test_transform_returns_failed_checks_dict(self, df):
         """Test _transform_type_checker returns results dictionary"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -1295,10 +1212,8 @@ class TestTransformTypeChecker(object):
             type_checker_failed_checks, dict
         ), f"incorrect type results type identified - expected: dict but got: {type(type_checker_failed_checks)}"
 
-    def test_transform_passes(self):
+    def test_transform_passes(self, df):
         """Test _transform_type_checker passes all the checks on the training dataframe"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -1310,10 +1225,8 @@ class TestTransformTypeChecker(object):
             type_checker_failed_checks == {}
         ), f"Type checker found failed tests - {list(type_checker_failed_checks.keys())}"
 
-    def test_transform_passes_column_all_nulls(self):
+    def test_transform_passes_column_all_nulls(self, df):
         """Test _transform_type_checker passes all the checks on the training dataframe when a column contains only nulls"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -1327,10 +1240,8 @@ class TestTransformTypeChecker(object):
             type_checker_failed_checks == {}
         ), f"Type checker found failed tests - {list(type_checker_failed_checks.keys())}"
 
-    def test_transform_captures_failed_test(self):
+    def test_transform_captures_failed_test(self, df):
         """Test _transform_type_checker captures a failed check"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -1350,10 +1261,8 @@ class TestTransformTypeChecker(object):
             type_checker_failed_checks["a"]["expected"] == exp_type
         ), f"incorrect values saved to type_checker_failed_checks expected types - expected: [{exp_type}] but got: {type_checker_failed_checks['a']['types']}"
 
-    def test_transform_passes_batch_mode(self):
+    def test_transform_passes_batch_mode(self, df):
         """Test _transform_type_checker passes all the checks on the training dataframe"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -1365,10 +1274,8 @@ class TestTransformTypeChecker(object):
             type_checker_failed_checks == {}
         ), f"Type checker found failed tests - {list(type_checker_failed_checks.keys())}"
 
-    def test_transform_captures_failed_test_batch_mode(self):
+    def test_transform_captures_failed_test_batch_mode(self, df):
         """Test _transform_type_checker handles mixed types"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -1430,30 +1337,26 @@ class TestTransformNullChecker(object):
     def test_arguments(self):
         """Test that InputChecker _transform_null_checker has expected arguments."""
 
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._transform_null_checker, expected_arguments=["self", "X"]
         )
 
-    def test_check_fitted_called(self, mocker):
+    def test_check_fitted_called(self, df, mocker):
         """Test that transform calls BaseTransformer.check_is_fitted."""
 
         expected_call_args = {0: {"args": (["null_map"],), "kwargs": {}}}
 
         x = InputChecker()
 
-        df = data_generators_p.create_df_2()
-
         x.fit(df)
 
-        with h.assert_function_call(
+        with ta.functions.assert_function_call(
             mocker, tubular.base.BaseTransformer, "check_is_fitted", expected_call_args
         ):
             x._transform_null_checker(df)
 
-    def test_transform_returns_failed_checks_dict(self):
+    def test_transform_returns_failed_checks_dict(self, df):
         """Test _transform_null_checker returns results dictionary"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -1465,10 +1368,8 @@ class TestTransformNullChecker(object):
             null_checker_failed_checks, dict
         ), f"incorrect null results type identified - expected: dict but got: {type(null_checker_failed_checks)}"
 
-    def test_transform_passes(self):
+    def test_transform_passes(self, df):
         """Test _transform_null_checker passes all the checks on the training dataframe"""
-
-        df = data_generators_p.create_df_2()
 
         df["b"] = df["b"].fillna("a")
 
@@ -1482,10 +1383,8 @@ class TestTransformNullChecker(object):
             null_checker_failed_checks == {}
         ), f"Null checker found failed tests - {list(null_checker_failed_checks.keys())}"
 
-    def test_transform_captures_failed_test(self):
+    def test_transform_captures_failed_test(self, df):
         """Test _transform_null_checker captures a failed check"""
-
-        df = data_generators_p.create_df_2()
 
         df["b"] = df["b"].fillna("a")
 
@@ -1508,35 +1407,28 @@ class TestTransformNumericalChecker(object):
     def test_arguments(self):
         """Test that InputChecker _transform_numerical_checker has expected arguments."""
 
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._transform_numerical_checker,
             expected_arguments=["self", "X", "type_fails", "batch_mode"],
-            expected_default_values=(
-                {},
-                False,
-            ),
+            expected_default_values=({}, False,),
         )
 
-    def test_check_fitted_called(self, mocker):
+    def test_check_fitted_called(self, df, mocker):
         """Test that transform calls BaseTransformer.check_is_fitted."""
 
         expected_call_args = {0: {"args": (["numerical_values"],), "kwargs": {}}}
 
         x = InputChecker(numerical_columns=["a"])
 
-        df = data_generators_p.create_df_2()
-
         x.fit(df)
 
-        with h.assert_function_call(
+        with ta.functions.assert_function_call(
             mocker, tubular.base.BaseTransformer, "check_is_fitted", expected_call_args
         ):
             x._transform_numerical_checker(df, {})
 
-    def test_transform_returns_failed_checks_dict(self):
+    def test_transform_returns_failed_checks_dict(self, df):
         """Test _transform_numerical_checker returns results dictionary"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(numerical_columns=["a"])
 
@@ -1548,10 +1440,8 @@ class TestTransformNumericalChecker(object):
             numerical_checker_failed_checks, dict
         ), f"incorrect numerical results type identified - expected: dict but got: {type(numerical_checker_failed_checks)}"
 
-    def test_transform_passes(self):
+    def test_transform_passes(self, df):
         """Test _transform_numerical_checker passes all the numerical checks on the training dataframe"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(numerical_columns=["a"])
 
@@ -1563,10 +1453,8 @@ class TestTransformNumericalChecker(object):
             numerical_checker_failed_checks == {}
         ), f"Numerical checker found failed tests - {list(numerical_checker_failed_checks.keys())}"
 
-    def test_transform_captures_failed_test(self):
+    def test_transform_captures_failed_test(self, df):
         """Test _transform_numerical_checker captures a failed check"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(numerical_columns=["a"])
 
@@ -1588,10 +1476,8 @@ class TestTransformNumericalChecker(object):
             numerical_checker_failed_checks["a"]["minimum"] == expected_min
         ), f"incorrect values saved to numerical_checker_failed_checks - expected: {expected_min} but got: {numerical_checker_failed_checks['a']['minimum']}"
 
-    def test_transform_captures_failed_test_only_maximum(self):
+    def test_transform_captures_failed_test_only_maximum(self, df):
         """Test _transform_numerical_checker captures a failed check when the check includes a maximum value but no minimum value"""
-
-        df = data_generators_p.create_df_2()
 
         numerical_dict = {}
         numerical_dict["a"] = {}
@@ -1617,10 +1503,8 @@ class TestTransformNumericalChecker(object):
             "minimum" not in numerical_checker_failed_checks["a"]
         ), "No minimum value results expected given input the numerical dict"
 
-    def test_transform_captures_failed_test_only_minimum(self):
+    def test_transform_captures_failed_test_only_minimum(self, df):
         """Test _transform_numerical_checker captures a failed check when the check includes a minimum value but no maximum value"""
-
-        df = data_generators_p.create_df_2()
 
         numerical_dict = {}
         numerical_dict["a"] = {}
@@ -1646,11 +1530,9 @@ class TestTransformNumericalChecker(object):
             "maximum" not in numerical_checker_failed_checks["a"]
         ), "No maximum value results expected given input the numerical dict"
 
-    def test_transform_skips_failed_type_checks_batch_mode(self):
+    def test_transform_skips_failed_type_checks_batch_mode(self, df):
         """Test _transform_numerical_checker skips checks for rows which aren't numerical
         when operating in batch mode"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(numerical_columns=["a"])
 
@@ -1670,17 +1552,15 @@ class TestTransformNumericalChecker(object):
             df, type_fails_dict, batch_mode=True
         )
 
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             actual=numerical_checker_failed_checks,
             expected=expected_output,
             msg="rows failing type check have not been removed by _transform_numerical_checker",
         )
 
-    def test_transform_skips_failed_type_checks(self):
+    def test_transform_skips_failed_type_checks(self, df):
         """Test _transform_numerical_checker skips checks for columns which aren't numerical
         when not operating in batch mode"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(numerical_columns=["a"])
 
@@ -1698,7 +1578,7 @@ class TestTransformNumericalChecker(object):
             df_test, type_fails_dict, batch_mode=False
         )
 
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             actual=numerical_checker_failed_checks,
             expected={},
             msg="rows failing type check have not been removed by _transform_numerical_checker",
@@ -1717,7 +1597,7 @@ class TestTransformNumericalChecker(object):
             df_test2, type_fails_dict2, batch_mode=False
         )
 
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             actual=numerical_checker_failed_checks2,
             expected={"a": {"max idxs": [2], "maximum": {2: 222}}},
             msg="rows failing type check have not been removed by _transform_numerical_checker",
@@ -1730,30 +1610,26 @@ class TestTransformValueChecker(object):
     def test_arguments(self):
         """Test that InputChecker _transform_value_checker has expected arguments."""
 
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._transform_value_checker, expected_arguments=["self", "X"]
         )
 
-    def test_check_fitted_called(self, mocker):
+    def test_check_fitted_called(self, df, mocker):
         """Test that transform calls BaseTransformer.check_is_fitted."""
 
         expected_call_args = {0: {"args": (["expected_values"],), "kwargs": {}}}
 
         x = InputChecker(categorical_columns=["b", "c"])
 
-        df = data_generators_p.create_df_2()
-
         x.fit(df)
 
-        with h.assert_function_call(
+        with ta.functions.assert_function_call(
             mocker, tubular.base.BaseTransformer, "check_is_fitted", expected_call_args
         ):
             x._transform_value_checker(df)
 
-    def test_transform_returns_failed_checks_dict(self):
+    def test_transform_returns_failed_checks_dict(self, df):
         """Test _transform_value_checker returns results dictionary"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(categorical_columns=["b", "c"])
 
@@ -1765,10 +1641,8 @@ class TestTransformValueChecker(object):
             value_checker_failed_checks, dict
         ), f"incorrect numerical results type identified - expected: dict but got: {type(value_checker_failed_checks)}"
 
-    def test_transform_passes(self):
+    def test_transform_passes(self, df):
         """Test _transform_value_checker passes all the categorical checks on the training dataframe"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(categorical_columns=["b", "c"])
 
@@ -1780,10 +1654,8 @@ class TestTransformValueChecker(object):
             value_checker_failed_checks == {}
         ), f"Categorical checker found failed tests - {list(value_checker_failed_checks.keys())}"
 
-    def test_transform_captures_failed_test(self):
+    def test_transform_captures_failed_test(self, df):
         """Test _transform_value_checker captures a failed check"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker(categorical_columns=["b", "c"])
 
@@ -1808,23 +1680,19 @@ class TestTransformDatetimeChecker(object):
     def test_arguments(self):
         """Test that InputChecker _transform_datetime_checker has expected arguments."""
 
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._transform_datetime_checker,
             expected_arguments=["self", "X", "type_fails", "batch_mode"],
-            expected_default_values=(
-                {},
-                False,
-            ),
+            expected_default_values=({}, False,),
         )
 
-    def test_check_fitted_called(self, mocker):
+    def test_check_fitted_called(self, df, mocker):
         """Test that transform calls BaseTransformer.check_is_fitted."""
 
         expected_call_args = {0: {"args": (["datetime_values"],), "kwargs": {}}}
 
         x = InputChecker(datetime_columns=["d"])
 
-        df = data_generators_p.create_df_2()
         df["d"] = pd.to_datetime(
             [
                 "01/02/2020",
@@ -1839,15 +1707,13 @@ class TestTransformDatetimeChecker(object):
 
         x.fit(df)
 
-        with h.assert_function_call(
+        with ta.functions.assert_function_call(
             mocker, tubular.base.BaseTransformer, "check_is_fitted", expected_call_args
         ):
             x._transform_datetime_checker(df, {})
 
-    def test_transform_returns_failed_checks_dict(self):
+    def test_transform_returns_failed_checks_dict(self, df):
         """Test _transform_datetime_checker returns results dictionary"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -1871,10 +1737,8 @@ class TestTransformDatetimeChecker(object):
             datetime_checker_failed_checks, dict
         ), f"incorrect datetime results type identified - expected: dict but got: {type(datetime_checker_failed_checks)}"
 
-    def test_transform_passes(self):
+    def test_transform_passes(self, df):
         """Test _transform_datetime_checker passes all the numerical checks on the training dataframe"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -1898,10 +1762,8 @@ class TestTransformDatetimeChecker(object):
             datetime_checker_failed_checks == {}
         ), f"Datetime checker found failed tests - {list(datetime_checker_failed_checks.keys())}"
 
-    def test_transform_captures_failed_test(self):
+    def test_transform_captures_failed_test(self, df):
         """Test _transform_datetime_checker captures a failed check"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -1939,11 +1801,9 @@ class TestTransformDatetimeChecker(object):
             f"expected: {outliers_2} but got: {results[1]} "
         )
 
-    def test_transform_captures_failed_test_both_minimum_and_maximum(self):
+    def test_transform_captures_failed_test_both_minimum_and_maximum(self, df):
         """Test _transform_datetime_checker captures a failed check when the check includes a maximum value and a
         minimum value"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -1988,11 +1848,9 @@ class TestTransformDatetimeChecker(object):
             f"{datetime_checker_failed_checks['d']['minimum']} "
         )
 
-    def test_transform_skips_failed_type_checks_batch_mode(self):
+    def test_transform_skips_failed_type_checks_batch_mode(self, df):
         """Test _transform_datetime_checker skips checks for rows which aren't datetime type
         when operating in batch mode"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -2026,7 +1884,7 @@ class TestTransformDatetimeChecker(object):
             df, type_fails_dict, batch_mode=True
         )
 
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             actual=datetime_checker_failed_checks,
             expected={
                 "d": {
@@ -2037,11 +1895,9 @@ class TestTransformDatetimeChecker(object):
             msg="rows failing type check have not been removed by _transform_datetime_checker",
         )
 
-    def test_transform_skips_failed_type_checks(self):
+    def test_transform_skips_failed_type_checks(self, df):
         """Test _transform_datetime_checker skips checks for columns which aren't datetime
         when not operating in batch mode"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -2069,7 +1925,7 @@ class TestTransformDatetimeChecker(object):
             df_test, type_fails_dict, batch_mode=False
         )
 
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             actual=datetime_checker_failed_checks,
             expected={},
             msg="rows failing type check have not been removed by _transform_datetime_checker",
@@ -2081,13 +1937,13 @@ class TestTransform(object):
 
     def test_arguments(self):
         """Test that transform has expected arguments."""
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker.transform,
             expected_arguments=["self", "X", "batch_mode"],
             expected_default_values=(False,),
         )
 
-    def test_super_transform_called(self, mocker):
+    def test_super_transform_called(self, df, mocker):
         """Test super transform is called by the transform method."""
 
         x = InputChecker(
@@ -2096,8 +1952,6 @@ class TestTransform(object):
             categorical_columns=["b", "c"],
             datetime_columns=["d"],
         )
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -2121,10 +1975,8 @@ class TestTransform(object):
             spy.call_count == 1
         ), "unexpected number of calls to tubular.base.BaseTransformer.transform with transform"
 
-    def test_transform_returns_df(self):
+    def test_transform_returns_df(self, df):
         """Test fit returns df"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -2148,10 +2000,8 @@ class TestTransform(object):
             df
         ), "Returned value from InputChecker.transform not as expected."
 
-    def test_batch_mode_transform_returns_df(self):
+    def test_batch_mode_transform_returns_df(self, df):
         """Test fit returns df"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -2175,13 +2025,13 @@ class TestTransform(object):
             df
         ), "Returned value from InputChecker.transform not as expected."
 
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             expected=df,
             actual=df_transformed,
             msg="Returned df of passed rows from InputChecker.transform not as expected.",
         )
 
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             expected=pd.DataFrame(
                 columns=df.columns.values.tolist() + ["failed_checks"]
             ),
@@ -2189,7 +2039,7 @@ class TestTransform(object):
             msg="Returned df of failed rows from InputChecker.transform not as expected.",
         )
 
-    def test_check_df_is_empty_called(self, mocker):
+    def test_check_df_is_empty_called(self, df, mocker):
         """Test check is df empty is called by the transform method."""
 
         x = InputChecker(
@@ -2198,8 +2048,6 @@ class TestTransform(object):
             categorical_columns=["b", "c"],
             datetime_columns=["d"],
         )
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -2228,21 +2076,19 @@ class TestTransform(object):
 
         expected_pos_args_0 = (x, "scoring dataframe", df)
 
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             expected=expected_pos_args_0,
             actual=call_0_pos_args,
             msg="positional args unexpected in _df_is_empty call for scoring dataframe argument",
         )
 
-    def test_non_optional_transforms_always_called(self, mocker):
+    def test_non_optional_transforms_always_called(self, df, mocker):
         """Test non-optional checks are called by the transform method irrespective of categorical_columns,
         numerical_columns & datetime_columns values."""
 
         x = InputChecker(
             numerical_columns=None, categorical_columns=None, datetime_columns=None
         )
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -2278,14 +2124,12 @@ class TestTransform(object):
             "categorical_columns set to None "
         )
 
-    def test_optional_transforms_not_called(self, mocker):
+    def test_optional_transforms_not_called(self, df, mocker):
         """Test optional checks are not called by the transform method."""
 
         x = InputChecker(
             numerical_columns=None, categorical_columns=None, datetime_columns=None
         )
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -2327,13 +2171,11 @@ class TestTransform(object):
             spy_datetime.call_count == 0
         ), "unexpected number of calls to _transform_datetime_checker with transform when datetime_columns set to None"
 
-    def test_raise_exception_if_checks_fail_called_no_optionals(self, mocker):
+    def test_raise_exception_if_checks_fail_called_no_optionals(self, df, mocker):
         """Test raise exception is called by the transform method when categorical, numerical_& datetime columns set
         to None."""
 
         x = InputChecker()
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -2369,7 +2211,7 @@ class TestTransform(object):
             expected_pos_args_0 == call_0_pos_args
         ), "positional args unexpected in raise_exception_if_checks_fail call in transform method"
 
-    def test_raise_exception_if_checks_fail_called_all_checks(self, mocker):
+    def test_raise_exception_if_checks_fail_called_all_checks(self, df, mocker):
         """Test raise exception is called by the transform method when categorical_columns and numerical_columns set
         to None."""
 
@@ -2378,8 +2220,6 @@ class TestTransform(object):
             categorical_columns=["b", "c"],
             datetime_columns=["d"],
         )
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -2427,13 +2267,11 @@ class TestTransform(object):
             expected_pos_args_0 == call_0_pos_args
         ), "positional args unexpected in raise_exception_if_checks_fail call in transform method"
 
-    def test_separate_passes_and_fails_called_no_optionals(self, mocker):
+    def test_separate_passes_and_fails_called_no_optionals(self, df, mocker):
         """Test raise exception is called by the transform method when categorical, numerical_& datetime columns set
         to None."""
 
         x = InputChecker()
-
-        df = data_generators_p.create_df_2()
 
         orig_df = df.copy(deep=True)
 
@@ -2468,13 +2306,13 @@ class TestTransform(object):
             orig_df,
         )
 
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             expected=expected_pos_args_0,
             actual=call_0_pos_args,
             msg="positional args unexpected in separate_passes_and_fails call in transform method",
         )
 
-    def test_separate_passes_and_fails_called_all_checks(self, mocker):
+    def test_separate_passes_and_fails_called_all_checks(self, df, mocker):
         """Test raise exception is called by the transform method when categorical_columns and numerical_columns set
         to None."""
 
@@ -2483,8 +2321,6 @@ class TestTransform(object):
             categorical_columns=["b", "c"],
             datetime_columns=["d"],
         )
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -2531,7 +2367,7 @@ class TestTransform(object):
             orig_df,
         )
 
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             expected=expected_pos_args_0,
             actual=call_0_pos_args,
             msg="positional args unexpected in separate_passes_and_fails call in transform method",
@@ -2543,7 +2379,7 @@ class TestRaiseExceptionIfChecksFail(object):
 
     def test_arguments(self):
         """Test that raise_exception_if_checks_fail has expected arguments."""
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker.raise_exception_if_checks_fail,
             expected_arguments=[
                 "self",
@@ -2556,12 +2392,10 @@ class TestRaiseExceptionIfChecksFail(object):
             expected_default_values=None,
         )
 
-    def test_no_failed_checks_before_transform(self):
+    def test_no_failed_checks_before_transform(self, df):
         """Test validation_failed_checks is not present before transform"""
 
         x = InputChecker()
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -2569,10 +2403,8 @@ class TestRaiseExceptionIfChecksFail(object):
             hasattr(x, "validation_failed_checks") is False
         ), "validation_failed_checks attribute present before transform"
 
-    def test_validation_failed_checks_saved(self):
+    def test_validation_failed_checks_saved(self, df):
         """Test raise_exception_if_checks_fail saves the validation results"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -2588,10 +2420,8 @@ class TestRaiseExceptionIfChecksFail(object):
             x.validation_failed_checks, dict
         ), f"incorrect validation results type identified - expected: dict but got: {type(x.validation_failed_checks)}"
 
-    def test_correct_validation_failed_checks(self):
+    def test_correct_validation_failed_checks(self, df):
         """Test raise_exception_if_checks_fail saves and prints the correct error message"""
-
-        df = data_generators_p.create_df_2()
 
         x = InputChecker()
 
@@ -2623,12 +2453,10 @@ class TestRaiseExceptionIfChecksFail(object):
             x.validation_failed_checks["Exception message"], str
         ), f"incorrect exception message type identified - expected: str but got: {type(x.validation_failed_checks['Exception message'])}"
 
-    def test_input_checker_error_raised_type(self):
+    def test_input_checker_error_raised_type(self, df):
         """Test InputCheckerError is raised if type test fails"""
 
         x = InputChecker()
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -2637,12 +2465,10 @@ class TestRaiseExceptionIfChecksFail(object):
         with pytest.raises(InputCheckerError):
             df = x.transform(df)
 
-    def test_input_checker_error_raised_nulls(self):
+    def test_input_checker_error_raised_nulls(self, df):
         """Test InputCheckerError is raised if null test fails"""
 
         x = InputChecker()
-
-        df = data_generators_p.create_df_2()
 
         df["b"] = df["b"].fillna("a")
 
@@ -2655,12 +2481,10 @@ class TestRaiseExceptionIfChecksFail(object):
         with pytest.raises(InputCheckerError):
             df = x.transform(df)
 
-    def test_input_checker_error_raised_categorical(self):
+    def test_input_checker_error_raised_categorical(self, df):
         """Test InputCheckerError is raised if categorical test fails"""
 
         x = InputChecker(categorical_columns=["b"])
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -2669,12 +2493,10 @@ class TestRaiseExceptionIfChecksFail(object):
         with pytest.raises(InputCheckerError):
             df = x.transform(df)
 
-    def test_input_checker_error_raised_numerical(self):
+    def test_input_checker_error_raised_numerical(self, df):
         """Test InputCheckerError is raised if numerical test fails"""
 
         x = InputChecker(numerical_columns=["a"])
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -2683,10 +2505,8 @@ class TestRaiseExceptionIfChecksFail(object):
         with pytest.raises(InputCheckerError):
             df = x.transform(df)
 
-    def test_input_checker_error_raised_datetime(self):
+    def test_input_checker_error_raised_datetime(self, df):
         """Test InputCheckerError is raised if datetime test fails"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -2713,12 +2533,10 @@ class TestRaiseExceptionIfChecksFail(object):
         with pytest.raises(InputCheckerError):
             df = x.transform(df)
 
-    def test_validation_failed_checks_correctly_stores_fails(self):
+    def test_validation_failed_checks_correctly_stores_fails(self, df):
         """Test correct data is saved in validation_failed_checks after a failed check exception"""
 
         x = InputChecker()
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -2794,7 +2612,7 @@ class TestSeparatePassAndFails(object):
 
     def test_arguments(self):
         """Test that separate_passes_and_fails has expected arguments."""
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker.separate_passes_and_fails,
             expected_arguments=[
                 "self",
@@ -2808,12 +2626,10 @@ class TestSeparatePassAndFails(object):
             expected_default_values=None,
         )
 
-    def test_input_checker_type_errors_shape(self):
+    def test_input_checker_type_errors_shape(self, df):
         """Test correct dataframes are returned if type test fails"""
 
         x = InputChecker()
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -2837,12 +2653,10 @@ class TestSeparatePassAndFails(object):
             df.shape[1] + 1
         ), f"Wrong number of columns for bad dataframe. Was expecting {df.shape[1]+1}, instead returned {bad_df.shape[1]}"
 
-    def test_input_checker_type_errors_column(self):
+    def test_input_checker_type_errors_column(self, df):
         """Test correct error column message is returned if type test fails"""
 
         x = InputChecker()
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -2867,12 +2681,10 @@ class TestSeparatePassAndFails(object):
             actual[0] == expected
         ), f"Values in failed_checks not as expected: actual: {actual} expected: {expected}"
 
-    def test_input_checker_null_errors_shape(self):
+    def test_input_checker_null_errors_shape(self, df):
         """Test correct dataframes are returned if null test fails"""
 
         x = InputChecker()
-
-        df = data_generators_p.create_df_2()
 
         df["b"] = df["b"].fillna("a")
 
@@ -2900,12 +2712,10 @@ class TestSeparatePassAndFails(object):
             df.shape[1] + 1
         ), f"Wrong number of columns for bad dataframe. Was expecting {df.shape[1]+1}, instead returned {bad_df.shape[1]}"
 
-    def test_input_checker_null_errors_column(self):
+    def test_input_checker_null_errors_column(self, df):
         """Test correct error column message is returned if null test fails"""
 
         x = InputChecker()
-
-        df = data_generators_p.create_df_2()
 
         df["b"] = df["b"].fillna("a")
 
@@ -2923,14 +2733,14 @@ class TestSeparatePassAndFails(object):
 
         expected = "Failed null check for column: b"
 
-        h.assert_equal_msg(message, expected, "Value in Reason Failed not as expected")
+        ta.equality.assert_equal_msg(
+            message, expected, "Value in Reason Failed not as expected"
+        )
 
-    def test_input_checker_categorical_errors_shape(self):
+    def test_input_checker_categorical_errors_shape(self, df):
         """Test correct dataframes are returned if categorical test fails"""
 
         x = InputChecker(categorical_columns=["b"])
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -2956,12 +2766,10 @@ class TestSeparatePassAndFails(object):
             df.shape[1] + 1
         ), f"Wrong number of columns for bad dataframe. Was expecting {df.shape[1]+1}, instead returned {bad_df.shape[1]}"
 
-    def test_input_checker_categorical_errors_column(self):
+    def test_input_checker_categorical_errors_column(self, df):
         """Test correct error column message is returned if categorical test fails"""
 
         x = InputChecker(categorical_columns=["b"])
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -2977,14 +2785,14 @@ class TestSeparatePassAndFails(object):
 
         expected = "Failed categorical check for column: b. Unexpected values are ['u']"
 
-        h.assert_equal_msg(message, expected, "Value in failed_checks not as expected")
+        ta.equality.assert_equal_msg(
+            message, expected, "Value in failed_checks not as expected"
+        )
 
-    def test_input_checker_numerical_errors_shape(self):
+    def test_input_checker_numerical_errors_shape(self, df):
         """Test correct dataframes are returned if numerical test fails"""
 
         x = InputChecker(numerical_columns=["a"])
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -3010,12 +2818,10 @@ class TestSeparatePassAndFails(object):
             df.shape[1] + 1
         ), f"Wrong number of columns for bad dataframe. Was expecting {df.shape[1]+1}, instead returned {bad_df.shape[1]}"
 
-    def test_input_checker_numerical_errors_column(self):
+    def test_input_checker_numerical_errors_column(self, df):
         """Test correct error column message is returned if numerical test fails"""
 
         x = InputChecker(numerical_columns=["a"])
-
-        df = data_generators_p.create_df_2()
 
         x.fit(df)
 
@@ -3031,12 +2837,12 @@ class TestSeparatePassAndFails(object):
 
         expected = "Failed minimum value check for column: a; Value below minimum: -1.0"
 
-        h.assert_equal_msg(message, expected, "Value in Reason Fails not as expected")
+        ta.equality.assert_equal_msg(
+            message, expected, "Value in Reason Fails not as expected"
+        )
 
-    def test_input_checker_datetime_errors_shape(self):
+    def test_input_checker_datetime_errors_shape(self, df):
         """Test correct dataframes are returned if datetime test fails"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -3082,10 +2888,8 @@ class TestSeparatePassAndFails(object):
             df.shape[1] + 1
         ), f"Wrong number of columns for bad dataframe. Was expecting {df.shape[1]+1}, instead returned {bad_df.shape[1]}"
 
-    def test_input_checker_datetime_errors_column(self):
+    def test_input_checker_datetime_errors_column(self, df):
         """Test correct error column message is returned if numerical test fails"""
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -3125,21 +2929,19 @@ class TestSeparatePassAndFails(object):
             "Failed minimum value check for column: d; Value below minimum: 2017-09-13"
         )
 
-        h.assert_equal_msg(
+        ta.equality.assert_equal_msg(
             message_0, expected_0, "Value in Reason Failed not as expected"
         )
-        h.assert_equal_msg(
+        ta.equality.assert_equal_msg(
             message_1, expected_1, "Value in Reason Failed not as expected"
         )
 
-    def test_full_failed_checks(self):
+    def test_full_failed_checks(self, df):
         """Test correct data is outputted for multiple failed exceptions"""
 
         x = InputChecker(
             numerical_columns=["a"], datetime_columns=["d"], categorical_columns=["b"]
         )
-
-        df = data_generators_p.create_df_2()
 
         df["d"] = pd.to_datetime(
             [
@@ -3193,25 +2995,25 @@ class TestSeparatePassAndFails(object):
 
         expected_msg_5 = "Failed null check for column: b"
 
-        h.assert_equal_msg(
+        ta.equality.assert_equal_msg(
             bad_df["failed_checks"].loc[0],
             expected_msg_0,
             "Wrong message in reason failed for index 0",
         )
 
-        h.assert_equal_msg(
+        ta.equality.assert_equal_msg(
             bad_df["failed_checks"].loc[2],
             expected_msg_2,
             "Wrong message in reason failed for index 2",
         )
 
-        h.assert_equal_msg(
+        ta.equality.assert_equal_msg(
             bad_df["failed_checks"].loc[4],
             expected_msg_4,
             "Wrong message in reason failed for index 4",
         )
 
-        h.assert_equal_msg(
+        ta.equality.assert_equal_msg(
             bad_df["failed_checks"].loc[5],
             expected_msg_5,
             "Wrong message in reason failed for index 5",
@@ -3224,8 +3026,7 @@ class TestSeparatePassAndFails(object):
         df = pd.DataFrame({"col1": ["a", "b", "c"], "col2": ["a", "b", "c"]})
 
         checker = InputChecker(
-            columns=["col1", "col2"],
-            categorical_columns=["col1", "col2"],
+            columns=["col1", "col2"], categorical_columns=["col1", "col2"],
         )
 
         checker.fit(df)
@@ -3240,7 +3041,7 @@ class TestSeparatePassAndFails(object):
             1
         ], "Wrong rows in bad_df when a row fails multiple value checks"
 
-        h.assert_equal_msg(
+        ta.equality.assert_equal_msg(
             bad_df["failed_checks"].loc[1],
             expected_msg,
             "Wrong message in reason failed when a row fails multiple value checks",
@@ -3252,7 +3053,7 @@ class TestUpdateBadDF(object):
 
     def test_arguments(self):
         """Test that _update_bad_df has expected arguments."""
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._update_bad_df,
             expected_arguments=[
                 "self",
@@ -3264,19 +3065,17 @@ class TestUpdateBadDF(object):
             expected_default_values=(None,),
         )
 
-    def test_expected_output(self):
+    def test_expected_output(self, df):
         """Test that _update_bad_df works as expected."""
 
         x = InputChecker(numerical_columns=["u"])
-
-        df = data_generators_p.create_df_2()
 
         df["failed_checks"] = "fail 1"
 
         bad_df = x._update_bad_df(df, [2, 4], "fail 2")
 
         # check message updated as expected
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             expected=[
                 "fail 1",
                 "fail 1",
@@ -3291,7 +3090,7 @@ class TestUpdateBadDF(object):
         )
 
         # check other columns unchanged
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             expected=df,
             actual=bad_df[df.columns],
             msg="other columns have been modified by _update_bad_df",
@@ -3303,7 +3102,7 @@ class TestUpdateGoodBadDF(object):
 
     def test_arguments(self):
         """Test that _update_good_bad_df has expected arguments."""
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._update_good_bad_df,
             expected_arguments=[
                 "self",
@@ -3316,12 +3115,10 @@ class TestUpdateGoodBadDF(object):
             expected_default_values=(None,),
         )
 
-    def test_expected_output(self):
+    def test_expected_output(self, df):
         """Test that _update_good_bad_df works as expected."""
 
         x = InputChecker(numerical_columns=["u"])
-
-        df = data_generators_p.create_df_2()
 
         bad_df = df.loc[[2, 4]]
         good_df = df.loc[[0, 1, 3, 5, 6]]
@@ -3330,21 +3127,21 @@ class TestUpdateGoodBadDF(object):
         good_df_up, bad_df_up = x._update_good_bad_df(good_df, bad_df, [3, 6], "fail 2")
 
         # check message in bad_df updated as expected
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             expected=["fail 1", "fail 1", "fail 2", "fail 2"],
             actual=bad_df_up["failed_checks"].values.tolist(),
             msg="failed_checks not updated as expected by _update_good_bad_df",
         )
 
         # check other columns in bad_df unchanged
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             expected=df.loc[[2, 4, 3, 6], :],
             actual=bad_df_up[df.columns],
             msg="other columns have been modified in bad_df by _update_good_bad_df",
         )
 
         # check good_df
-        h.assert_equal_dispatch(
+        ta.equality.assert_equal_dispatch(
             expected=df.loc[[0, 1, 5], :],
             actual=good_df_up,
             msg="wrong good_df returned by _update_good_bad_df",
@@ -3356,7 +3153,7 @@ class TestCheckType(object):
 
     def test_arguments(self):
         """Test that _check_type has expected arguments."""
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._check_type,
             expected_arguments=["self", "obj", "obj_name", "options"],
             expected_default_values=None,
@@ -3375,7 +3172,7 @@ class TestIsStringValue(object):
 
     def test_arguments(self):
         """Test that _check_type has expected arguments."""
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._is_string_value,
             expected_arguments=["self", "string", "string_name", "check_value"],
             expected_default_values=None,
@@ -3393,19 +3190,19 @@ class TestIsSubset(object):
 
     def test_arguments(self):
         """Test that _is_subset has expected arguments."""
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._is_subset,
             expected_arguments=["self", "obj_name", "columns", "dataframe"],
             expected_default_values=None,
         )
 
-    def test_exception(self):
+    def test_exception(self, df):
         """Test that _is_subset fails with the correct error."""
 
         x = InputChecker(numerical_columns=["u"])
 
         with pytest.raises(ValueError):
-            x.fit(data_generators_p.create_df_2())
+            x.fit(df)
 
 
 class TestIsEmpty(object):
@@ -3413,7 +3210,7 @@ class TestIsEmpty(object):
 
     def test_arguments(self):
         """Test that _is_empty has expected arguments."""
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._is_empty,
             expected_arguments=["self", "obj_name", "obj"],
             expected_default_values=None,
@@ -3437,7 +3234,7 @@ class TestIsListedInColumns(object):
 
     def test_arguments(self):
         """Test that _is_empty has expected arguments."""
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._is_listed_in_columns,
             expected_arguments=["self"],
             expected_default_values=None,
@@ -3493,7 +3290,7 @@ class TestDfIsEmpty(object):
 
     def test_arguments(self):
         """Test that _df_is_empty has expected arguments."""
-        h.test_function_arguments(
+        ta.functions.test_function_arguments(
             func=InputChecker._df_is_empty,
             expected_arguments=["self", "obj_name", "df"],
             expected_default_values=None,

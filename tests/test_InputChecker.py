@@ -53,9 +53,7 @@ class TestInit(object):
         x = InputChecker(columns=["a"])
 
         ta.equality.assert_equal_dispatch(
-            expected=__version__,
-            actual=x.version_,
-            msg="__version__ attribute",
+            expected=__version__, actual=x.version_, msg="__version__ attribute",
         )
 
     def test_columns_attributes_generated(self, df):
@@ -1031,9 +1029,7 @@ class TestFit(object):
     def test_super_fit_called(self, df, mocker):
         """Test that BaseTransformer fit called."""
 
-        expected_call_args = {
-            0: {"args": (df, None), "kwargs": {}}
-        }
+        expected_call_args = {0: {"args": (df, None), "kwargs": {}}}
 
         x = InputChecker(columns=["a"])
 
@@ -1414,10 +1410,7 @@ class TestTransformNumericalChecker(object):
         ta.functions.test_function_arguments(
             func=InputChecker._transform_numerical_checker,
             expected_arguments=["self", "X", "type_fails", "batch_mode"],
-            expected_default_values=(
-                {},
-                False,
-            ),
+            expected_default_values=({}, False,),
         )
 
     def test_check_fitted_called(self, df, mocker):
@@ -1690,10 +1683,7 @@ class TestTransformDatetimeChecker(object):
         ta.functions.test_function_arguments(
             func=InputChecker._transform_datetime_checker,
             expected_arguments=["self", "X", "type_fails", "batch_mode"],
-            expected_default_values=(
-                {},
-                False,
-            ),
+            expected_default_values=({}, False,),
         )
 
     def test_check_fitted_called(self, df, mocker):
@@ -2743,7 +2733,9 @@ class TestSeparatePassAndFails(object):
 
         expected = "Failed null check for column: b"
 
-        ta.equality.assert_equal_msg(message, expected, "Value in Reason Failed not as expected")
+        ta.equality.assert_equal_msg(
+            message, expected, "Value in Reason Failed not as expected"
+        )
 
     def test_input_checker_categorical_errors_shape(self, df):
         """Test correct dataframes are returned if categorical test fails"""
@@ -2793,7 +2785,9 @@ class TestSeparatePassAndFails(object):
 
         expected = "Failed categorical check for column: b. Unexpected values are ['u']"
 
-        ta.equality.assert_equal_msg(message, expected, "Value in failed_checks not as expected")
+        ta.equality.assert_equal_msg(
+            message, expected, "Value in failed_checks not as expected"
+        )
 
     def test_input_checker_numerical_errors_shape(self, df):
         """Test correct dataframes are returned if numerical test fails"""
@@ -2843,7 +2837,9 @@ class TestSeparatePassAndFails(object):
 
         expected = "Failed minimum value check for column: a; Value below minimum: -1.0"
 
-        ta.equality.assert_equal_msg(message, expected, "Value in Reason Fails not as expected")
+        ta.equality.assert_equal_msg(
+            message, expected, "Value in Reason Fails not as expected"
+        )
 
     def test_input_checker_datetime_errors_shape(self, df):
         """Test correct dataframes are returned if datetime test fails"""
@@ -3030,8 +3026,7 @@ class TestSeparatePassAndFails(object):
         df = pd.DataFrame({"col1": ["a", "b", "c"], "col2": ["a", "b", "c"]})
 
         checker = InputChecker(
-            columns=["col1", "col2"],
-            categorical_columns=["col1", "col2"],
+            columns=["col1", "col2"], categorical_columns=["col1", "col2"],
         )
 
         checker.fit(df)
